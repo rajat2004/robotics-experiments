@@ -1,4 +1,3 @@
-import setup_path
 import airsim
 from datetime import datetime
 
@@ -56,7 +55,7 @@ while(framecounter <= 1500):
     if framecounter%500 == 0:
         client.simGetImages([airsim.ImageRequest("high_res", airsim.ImageType.Scene, False, False)])
         # Disable camera, simGetImages automatically enables the camera
-        client.simDisableCamera("high_res", airsim.ImageType.Scene)
+        # client.simDisableCamera("high_res", airsim.ImageType.Scene)
         print("High resolution image captured.")
 
     if framecounter%30 == 0:
