@@ -16,6 +16,27 @@ cameraTypeMap = {
     "normals": airsim.ImageType.SurfaceNormals
 }
 
+def saveImage(response, filename):
+    if response.pixels_as_float:
+        print("Type %d, size %d, height %d, width %d" % (response.image_type, len(response.image_data_float),
+                response.height, response.width))
+        # airsim.write_pfm(os.path.normpath(filename + '.pfm'), airsim.get_pfm_array(response))
+        depth = np.array(response.image_data_float, dtype=np.float64)
+        depth = depth.reshape(response.height, response.width, -1)
+        depth = np.array(depth * 255, dtype=np.uint8)
+        # save pic
+        cv2.imwrite('{}.png'.format(filename), depth)
+    elif response.compress: #png format
+        print("Type %d, size %d, height %d, width %d" % (response.image_type, len(response.image_data_uint8),
+                response.height, response.width))
+        airsim.write_file(os.path.normpath(filename + '.png'), response.image_data_uint8)
+    else: #uncompressed array
+        print("Type %d, size %d, height %d, width %d" % (response.image_type, len(response.image_data_uint8),
+                response.height, response.width))
+        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) # get numpy array
+        img_rgb = img1d.reshape(response.height, response.width, -1) # reshape array to 4 channel image array H X W X 4
+        cv2.imwrite(os.path.normpath(filename + '.png'), img_rgb) # write to png
+
 class ImageBenchmarker():
     def __init__(self, 
             img_benchmark_type = 'simGetImages', 
@@ -87,8 +108,12 @@ class ImageBenchmarker():
         self.image_benchmark_num_images += 1
         request = [airsim.ImageRequest("front_center", self.img_type, False, False)]
         response = self.airsim_client.simGetImages(request)
-        np_arr = np.frombuffer(response[0].image_data_uint8, dtype=np.uint8)
-        img = np_arr.reshape(response[0].height, response[0].width, -1)
+        # if response.pixels_as_float:
+        #     np_arr = 
+
+        # np_arr = np.frombuffer(response[0].image_data_uint8, dtype=np.uint8)
+        # img = np_arr.reshape(response[0].height, response[0].width, -1)
+        # print(img.shape)
 
         self.image_benchmark_total_time = time.time() - self.benchmark_start_time
         avg_fps = self.image_benchmark_num_images / self.image_benchmark_total_time
@@ -99,7 +124,8 @@ class ImageBenchmarker():
             cv2.waitKey(1)
         if self.save_images:
             filename = os.path.join(self.tmp_dir, str(self.image_benchmark_num_images))
-            cv2.imwrite(os.path.normpath(filename + '.png'), img) # write to png
+            saveImage(response[0], filename)
+            # cv2.imwrite(os.path.normpath(filename + '.png'), img) # write to png
 
 
 def main(args):
