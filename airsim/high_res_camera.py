@@ -2,17 +2,15 @@ import airsim
 from datetime import datetime
 
 '''
-Example file showing how to use and disable a high-resolution camera
-Useful when it's used only occasionaly, and without disabling the camera affects the simulator performance
+Simple script with settings to create a high-resolution camera, and fetching it
 
 Settings used-
 {
     "SettingsVersion": 1.2,
     "SimMode": "Multirotor",
     "Vehicles" : {
-        "Drone" : {
+        "Drone1" : {
             "VehicleType" : "SimpleFlight",
-            "DefaultVehicleState" : "Armed",
             "AutoCreate" : true,
             "Cameras" : {
                 "high_res": {
@@ -41,26 +39,22 @@ Settings used-
         }
     }
 }
-
-See - https://github.com/microsoft/AirSim/pull/2465
 '''
 
-client = airsim.MultirotorClient()
+client = airsim.VehicleClient()
 client.confirmConnection()
 framecounter = 1
 
 prevtimestamp = datetime.now()
 
-while(framecounter <= 1500):
-    if framecounter%500 == 0:
+while(framecounter <= 500):
+    if framecounter%150 == 0:
         client.simGetImages([airsim.ImageRequest("high_res", airsim.ImageType.Scene, False, False)])
-        # Disable camera, simGetImages automatically enables the camera
-        # client.simDisableCamera("high_res", airsim.ImageType.Scene)
         print("High resolution image captured.")
 
     if framecounter%30 == 0:
         now = datetime.now()
-        print("Time spent for 30 frames: " + str(now-prevtimestamp))
+        print(f"Time spent for 30 frames: {now-prevtimestamp}")
         prevtimestamp = now
 
     client.simGetImages([airsim.ImageRequest("low_res", airsim.ImageType.Scene, False, False)])
